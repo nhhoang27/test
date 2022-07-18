@@ -1,33 +1,23 @@
-node {
-    def app
+pipeline{
+    agent { label 'linux'}
 
-    stage('Clone repository') {
-        /* Cloning the Repository to our Workspace */
+    stages {
+        stage('gitclone') {
+            steps {
+                git 'https://github.com/nhhoang27/nodejs-pull-push-docker.git'
+            }
+        }
 
-        checkout scm
-    }
+        stage('Build') {
+            steps {
+                sh 'docker build -t 172.16.10.109/nodeapp_test:latest .'
+            }
+        }
 
-    stage('Build image') {
-        /* This builds the actual image */
-
-        app = docker.build("172.16.10.109:5000/nodejs")
-    }
-
-    stage('Test image') {
-        
-        app.inside {
-            echo "Tests passed"
+        stage('Push') {
+            steps {
+                sh 'docker push 172.16.10.109/nodeapp_test:latest'
+            }
         }
     }
-
-    stage('Push image') {
-        /* 
-			You would need to first register with DockerHub before you can push images to your account
-		*/
-        docker.withRegistry('http://172.16.10.109:5000', 'docker-hub-lab') {
-            app.push("${env.BUILD_NUMBER}")
-            app.push("latest")
-            } 
-                echo "Trying to Push Docker Build to DockerHub"
-    }
-}
+} 
